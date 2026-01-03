@@ -21,7 +21,7 @@ export default function App() {
   }, [])
 
   return (
-     <div
+    <div
       style={{
         padding: 24,
         fontFamily: "system-ui",
@@ -31,7 +31,13 @@ export default function App() {
       }}
     >
       <h1>Dino Dawn – MVP v0.1</h1>
-      <p>Si ves esto, el render está OK.</p>
+
+      <h2>Recursos</h2>
+      <ul>
+        <li>🌲 Madera: {Math.floor(resources.wood)}</li>
+        <li>🦴 Huesos: {Math.floor(resources.bones)}</li>
+        <li>🍖 Comida: {Math.floor(resources.food)}</li>
+      </ul>
     </div>
   )
 }

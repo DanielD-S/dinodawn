@@ -30,15 +30,15 @@ export function calculateResources(state) {
 
   if (elapsedSeconds <= 0) return state
 
-  const newState = { ...state }
+  const next = { ...state }
 
   Object.keys(PRODUCTION).forEach((key) => {
-    newState[key] = Math.min(
+    next[key] = Math.min(
       STORAGE_LIMIT,
       state[key] + PRODUCTION[key] * elapsedSeconds
     )
   })
 
-  newState.lastUpdate = now
-  return newState
+  next.lastUpdate = now
+  return next
 }
