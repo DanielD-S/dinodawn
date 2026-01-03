@@ -1,43 +1,40 @@
 import { useEffect, useState } from "react"
-import {
-  loadResources,
-  saveResources,
-  calculateResources,
-} from "./services/resources"
+import { BrowserRouter, Routes, Route } from "react-router-dom"
+import { getSession } from "./services/authService"
+
+import Login from "./pages/Login"
+import Register from "./pages/Register"
+import Game from "./pages/Game"
+import ProtectedRoute from "./components/ProtectedRoute"
 
 export default function App() {
-  const [resources, setResources] = useState(loadResources())
+  const [session, setSession] = useState(null)
+  const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    const interval = setInterval(() => {
-      setResources((prev) => {
-        const updated = calculateResources(prev)
-        saveResources(updated)
-        return updated
-      })
-    }, 1000)
-
-    return () => clearInterval(interval)
+    getSession().then((s) => {
+      setSession(s)
+      setLoading(false)
+    })
   }, [])
 
-  return (
-    <div
-      style={{
-        padding: 24,
-        fontFamily: "system-ui",
-        color: "#111",
-        background: "#fff",
-        minHeight: "100vh",
-      }}
-    >
-      <h1>Dino Dawn – MVP v0.1</h1>
+  if (loading) return <p>Cargando...</p>
 
-      <h2>Recursos</h2>
-      <ul>
-        <li>🌲 Madera: {Math.floor(resources.wood)}</li>
-        <li>🦴 Huesos: {Math.floor(resources.bones)}</li>
-        <li>🍖 Comida: {Math.floor(resources.food)}</li>
-      </ul>
-    </div>
+  return (
+    <BrowserRouter>
+      <Routes>
+        <Route path="/login" element={<Login />} />
+        <Route path="/register" element={<Register />} />
+
+        <Route
+          path="/"
+          element={
+            <ProtectedRoute session={session}>
+              <Game />
+            </ProtectedRoute>
+          }
+        />
+      </Routes>
+    </BrowserRouter>
   )
 }
