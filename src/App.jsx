@@ -1,16 +1,37 @@
-import { useState } from 'react'
-import reactLogo from './assets/react.svg'
-import viteLogo from '/vite.svg'
-import './App.css'
+import { useEffect, useState } from "react"
+import {
+  loadResources,
+  saveResources,
+  calculateResources,
+} from "./services/resources"
 
-function App() {
+export default function App() {
+  const [resources, setResources] = useState(loadResources())
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setResources((prev) => {
+        const updated = calculateResources(prev)
+        saveResources(updated)
+        return updated
+      })
+    }, 1000)
+
+    return () => clearInterval(interval)
+  }, [])
+
   return (
-    <div>
+     <div
+      style={{
+        padding: 24,
+        fontFamily: "system-ui",
+        color: "#111",
+        background: "#fff",
+        minHeight: "100vh",
+      }}
+    >
       <h1>Dino Dawn – MVP v0.1</h1>
-      <p>Si ves esto, React está funcionando.</p>
+      <p>Si ves esto, el render está OK.</p>
     </div>
   )
 }
-
-export default App
-
