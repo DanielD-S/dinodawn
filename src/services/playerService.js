@@ -24,3 +24,13 @@ export async function getResources() {
   if (error) throw error
   return data
 }
+export async function collectResources() {
+  const { data, error } = await supabase.rpc("collect_resources")
+  if (error) throw error
+  return data
+}
+export async function upgradeStorage() {
+  const { data, error } = await supabase.rpc("upgrade_storage")
+  if (error) throw error
+  return data
+}
