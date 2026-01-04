@@ -1,5 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from "react"
 
+import { supabase } from "../lib/supabaseClient"
+
 import {
   bootstrapPlayer,
   getVillage,
@@ -31,17 +33,23 @@ import GameMenuTop from "../components/game/GameMenuTop"
 import { getMyBuildingsView, upgradeBuilding } from "../services/buildingsService"
 import BuildingsPanel from "../components/game/BuildingsPanel"
 
+import "./Games.css" // ✅ crea este archivo en src/pages/Game.css
+import VillageSummaryCard from "../components/game/VillageSummaryCard"
+
 async function safeGetVillageAndResources() {
-  // 1er intento normal
   try {
     const [v, r] = await Promise.all([getVillage(), getResources()])
     return { v, r, retried: false }
   } catch (e) {
-    // fallback: re-bootstrap y reintentar 1 vez (útil si no existen filas aún)
     console.warn("safeGetVillageAndResources first try failed:", e)
     await bootstrapPlayer("Mi Aldea")
-    // 👇 APLICAR STORAGE CAP (1 sola vez por sesión, es barato)
-    await supabase.rpc("apply_my_storage_cap")
+
+    try {
+      await supabase.rpc("apply_my_storage_cap")
+    } catch (err) {
+      console.warn("apply_my_storage_cap failed:", err)
+    }
+
     const [v, r] = await Promise.all([getVillage(), getResources()])
     return { v, r, retried: true }
   }
@@ -64,10 +72,12 @@ export default function Game() {
   const [selectedDinos, setSelectedDinos] = useState([])
 
   const [buildings, setBuildings] = useState([])
-  const [view, setView] = useState("village") // village | buildings | dinosaurs | pve | reports
+  const [view, setView] = useState("village") // village | dinosaurs | pve | reports
 
   const [lastSyncAt, setLastSyncAt] = useState(null)
   const syncingRef = useRef(false)
+
+  const buildingsSectionRef = useRef(null)
 
   async function refreshDinosaurs() {
     setDinosaurs(await getDinosaurs())
@@ -98,7 +108,6 @@ export default function Game() {
     setResources(r)
   }
 
-  // Limpia selección si dinos dejan de estar idle
   useEffect(() => {
     const idleIds = new Set(dinosaurs.filter((d) => d.status === "idle").map((d) => d.id))
     setSelectedDinos((prev) => prev.filter((id) => idleIds.has(id)))
@@ -113,7 +122,6 @@ export default function Game() {
     }
   }, [production])
 
-  // INIT
   useEffect(() => {
     let alive = true
     async function init() {
@@ -140,7 +148,6 @@ export default function Game() {
         setAttacks(aa)
         setReports(rr)
 
-        // Producción depende de buildings_view (playerService ya suma desde get_my_buildings_view)
         const pr = await getProductionRates()
         if (!alive) return
         setProduction(pr)
@@ -258,9 +265,7 @@ export default function Game() {
       if (busy.hardRefresh || busy.upgradeBuildingType) return
       try {
         await syncNow()
-      } catch {
-        // silencioso
-      }
+      } catch {}
     }
 
     const s = Math.max(3, Number(autoSyncSeconds || 10))
@@ -314,12 +319,7 @@ export default function Game() {
     setFlag("hardRefresh", true)
     setError("")
     try {
-      await Promise.all([
-        refreshVillageAndResources(),
-        refreshDinosaurs(),
-        refreshPve(),
-        refreshBuildings(),
-      ])
+      await Promise.all([refreshVillageAndResources(), refreshDinosaurs(), refreshPve(), refreshBuildings()])
       await refreshProduction()
       setLastSyncAt(Date.now())
     } catch (e) {
@@ -363,28 +363,17 @@ export default function Game() {
     }
   }
 
-  // ✅ MODIFICACIÓN CLAVE: sincronizar (persistir) antes de intentar mejorar
   async function handleUpgradeBuilding(buildingType) {
     setFlag("upgradeBuildingType", buildingType)
     setError("")
     try {
-      // 1) Persistir producción pendiente para que el RPC valide contra DB correctamente
       await syncNow()
-
-      // 2) Upgrade (valida y descuenta en DB)
       const result = await upgradeBuilding(buildingType)
 
-      // 3) Rehidratar desde DB (autoridad) para evitar desfases UI vs DB
-      const [b, pr, r] = await Promise.all([
-        getMyBuildingsView(),
-        getProductionRates(),
-        getResources(),
-      ])
-
+      const [b, pr, r] = await Promise.all([getMyBuildingsView(), getProductionRates(), getResources()])
       setBuildings(b)
       setProduction(pr)
       setResources(result?.resources ?? r)
-
       setLastSyncAt(Date.now())
     } catch (e) {
       setError(e?.message ?? "Error al mejorar edificio")
@@ -398,88 +387,128 @@ export default function Game() {
     return Math.max(0, s - (Math.floor(now / 1000) % s))
   }, [now, autoSyncSeconds])
 
-  if (loading) return <div style={{ padding: 24 }}>Cargando aldea...</div>
+  if (loading) return <div className="gamePage">Cargando aldea...</div>
 
   if (!resources) {
     return (
-      <div style={{ padding: 24 }}>
-        <p>No hay recursos cargados.</p>
-        <button onClick={handleHardRefresh} disabled={busy.hardRefresh}>
-          {busy.hardRefresh ? "Refrescando..." : "Reintentar"}
-        </button>
+      <div className="gamePage">
+        <div className="gameContainer">
+          <p>No hay recursos cargados.</p>
+          <button onClick={handleHardRefresh} disabled={busy.hardRefresh}>
+            {busy.hardRefresh ? "Refrescando..." : "Reintentar"}
+          </button>
+        </div>
       </div>
     )
   }
 
   const menuBadges = { ...badges, buildings: buildings?.length ? buildings.length : 0 }
 
+  function handleSetView(next) {
+    if (next === "buildings") {
+      setView("village")
+      setTimeout(() => {
+        buildingsSectionRef.current?.scrollIntoView({ behavior: "smooth", block: "start" })
+      }, 0)
+      return
+    }
+    setView(next)
+  }
+
   return (
-    <div style={{ padding: 24, fontFamily: "system-ui" }}>
-      <GameHeader
-        villageName={village?.name}
-        onRefresh={handleHardRefresh}
-        refreshing={busy.hardRefresh}
-      />
-
-      <ErrorBanner error={error} onClose={() => setError("")} disabled={anyBusy} />
-
-      <GameMenuTop view={view} setView={setView} disabled={false} badges={menuBadges} />
-
-      {view === "village" && (
-        <ResourcesPanel
-          resources={resources}
-          onCollect={handleCollect}
-          busyCollect={busy.collect}
-          ratesPerHour={ratesPerHour}
-          storageUi={storageUi}
-          nextAutoInSeconds={nextAutoInSeconds}
-          lastSyncAt={lastSyncAt}
-          now={now}
-          syncing={busy.collect}
-          autoSyncSeconds={autoSyncSeconds}
+    <div className="gamePage">
+      <div className="gameContainer">
+        <GameHeader
+          villageName={village?.name}
+          onRefresh={handleHardRefresh}
+          refreshing={busy.hardRefresh}
         />
-      )}
 
-      {view === "buildings" && (
-  <BuildingsPanel
-    buildings={buildings}
+        <ErrorBanner error={error} onClose={() => setError("")} disabled={anyBusy} />
+
+        <GameMenuTop view={view} setView={handleSetView} disabled={false} badges={menuBadges} />
+
+        {view === "village" && (
+          <>
+           <VillageSummaryCard
+    villageName={village?.name ?? "Mi Aldea"}
     resources={resources}
     ratesPerHour={ratesPerHour}
+    storageUi={storageUi}
     now={now}
-    lastSyncAt={lastSyncAt}
-    onUpgrade={handleUpgradeBuilding}
-    busyUpgradeType={busy.upgradeBuildingType}
+    nextAutoInSeconds={nextAutoInSeconds}
+    autoSyncSeconds={autoSyncSeconds}
+    onGoBuildings={() => {
+      setTimeout(() => {
+        buildingsSectionRef.current?.scrollIntoView({ behavior: "smooth", block: "start" })
+      }, 0)
+    }}
   />
-)}
+            <div className="gameSection">
+              <ResourcesPanel
+                resources={resources}
+                onCollect={handleCollect}
+                busyCollect={busy.collect}
+                ratesPerHour={ratesPerHour}
+                storageUi={storageUi}
+                nextAutoInSeconds={nextAutoInSeconds}
+                lastSyncAt={lastSyncAt}
+                now={now}
+                syncing={busy.collect}
+                autoSyncSeconds={autoSyncSeconds}
+              />
+            </div>
 
+            <div ref={buildingsSectionRef} className="gameSection">
+              <BuildingsPanel
+                buildings={buildings}
+                resources={resources}
+                ratesPerHour={ratesPerHour}
+                now={now}
+                lastSyncAt={lastSyncAt}
+                onUpgrade={handleUpgradeBuilding}
+                busyUpgradeType={busy.upgradeBuildingType}
+              />
+            </div>
+          </>
+        )}
 
-      {view === "dinosaurs" && (
-        <DinosaursPanel
-          dinosaurs={dinosaurs}
-          trainingCount={trainingCount}
-          onTrain={handleTrain}
-          onClaim={handleClaim}
-          busyTrainKind={busy.trainKind}
-          busyClaim={busy.claim}
-        />
-      )}
+        {view === "dinosaurs" && (
+          <div className="gameSection">
+            <DinosaursPanel
+              dinosaurs={dinosaurs}
+              trainingCount={trainingCount}
+              onTrain={handleTrain}
+              onClaim={handleClaim}
+              busyTrainKind={busy.trainKind}
+              busyClaim={busy.claim}
+            />
+          </div>
+        )}
 
-      {view === "pve" && (
-        <PvePanel
-          dinosaurs={dinosaurs}
-          creatures={creatures}
-          attacks={attacks}
-          selectedDinos={selectedDinos}
-          setSelectedDinos={setSelectedDinos}
-          onStartAttack={handleStartAttack}
-          onResolveAttack={handleResolveAttack}
-          busyStartAttackId={busy.startAttackId}
-          busyResolveAttackId={busy.resolveAttackId}
-          now={now}
-        />
-      )}
+        {view === "pve" && (
+          <div className="gameSection">
+            <PvePanel
+              dinosaurs={dinosaurs}
+              creatures={creatures}
+              attacks={attacks}
+              selectedDinos={selectedDinos}
+              setSelectedDinos={setSelectedDinos}
+              onStartAttack={handleStartAttack}
+              onResolveAttack={handleResolveAttack}
+              busyStartAttackId={busy.startAttackId}
+              busyResolveAttackId={busy.resolveAttackId}
+              now={now}
+            />
+          </div>
+        )}
 
-      {view === "reports" && <ReportsPanel reports={reports} />}
+        {view === "reports" && (
+          <div className="gameSection">
+            <ReportsPanel reports={reports} />
+          </div>
+        )}
+      </div>
     </div>
   )
 }

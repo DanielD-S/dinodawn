@@ -1,0 +1,177 @@
+.vscCard {
+  border-radius: 14px;
+  overflow: hidden;
+}
+
+.vscHero {
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  background:
+    radial-gradient(1200px 500px at 20% -20%, rgba(255,255,255,0.12), transparent 55%),
+    radial-gradient(900px 380px at 90% 0%, rgba(255,255,255,0.08), transparent 60%),
+    linear-gradient(180deg, rgba(255,255,255,0.05), rgba(255,255,255,0.02));
+  padding: 14px;
+  border-radius: 14px;
+}
+
+.vscHeroTop {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.vscTitleRow {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.vscTitle {
+  font-size: 18px;
+  font-weight: 900;
+  letter-spacing: 0.2px;
+}
+
+.vscMeta {
+  font-size: 12px;
+  opacity: 0.7;
+  white-space: nowrap;
+}
+
+.vscKpis {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+
+.vscKpi {
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: rgba(255, 255, 255, 0.03);
+  border-radius: 12px;
+  padding: 10px;
+}
+
+.vscKpiLabel {
+  font-size: 12px;
+  opacity: 0.75;
+  margin-bottom: 6px;
+}
+
+.vscKpiValue {
+  font-size: 13px;
+  font-weight: 700;
+  opacity: 0.95;
+  line-height: 1.2;
+}
+
+.vscBar {
+  height: 10px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.08);
+  overflow: hidden;
+  margin: 12px 0 10px 0;
+}
+
+.vscBarFill {
+  height: 100%;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.35);
+}
+
+.vscBarFill.warn {
+  background: rgba(255, 205, 64, 0.55);
+}
+
+.vscBarFill.danger {
+  background: rgba(255, 80, 80, 0.6);
+}
+
+.vscHeroBottom {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.vscHint {
+  font-size: 13px;
+  opacity: 0.9;
+}
+
+.vscDanger {
+  color: rgba(255, 80, 80, 0.95);
+  font-weight: 800;
+}
+
+.vscActions {
+  display: flex;
+  gap: 10px;
+}
+
+.vscBtn {
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  background: rgba(255, 255, 255, 0.06);
+  color: inherit;
+  border-radius: 12px;
+  padding: 10px 12px;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.vscBtn:hover {
+  background: rgba(255, 255, 255, 0.10);
+}
+
+.vscRec {
+  margin-top: 10px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: rgba(255, 255, 255, 0.03);
+  border-radius: 14px;
+  padding: 12px 14px;
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  align-items: center;
+}
+
+.vscRecTitle {
+  font-size: 13px;
+  font-weight: 900;
+  margin-bottom: 4px;
+}
+
+.vscRecDesc {
+  font-size: 12px;
+  opacity: 0.75;
+}
+
+.vscChip {
+  font-size: 12px;
+  font-weight: 900;
+  opacity: 0.9;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  background: rgba(255, 255, 255, 0.05);
+  padding: 8px 10px;
+  border-radius: 999px;
+  white-space: nowrap;
+}
+
+@media (max-width: 640px) {
+  .vscKpis {
+    grid-template-columns: 1fr;
+  }
+
+  .vscHeroBottom {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .vscActions {
+    width: 100%;
+  }
+
+  .vscBtn {
+    width: 100%;
+    justify-content: center;
+  }
+}
