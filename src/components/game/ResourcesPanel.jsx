@@ -39,31 +39,53 @@ function Since({ lastSyncAt, now }) {
 
 export default function ResourcesPanel({
   resources,
-  storageCost,
-  canUpgradeStorage,
   onCollect,
-  onUpgradeStorage,
   busyCollect,
-  busyUpgrade,
   ratesPerHour,
   storageUi,
   nextAutoInSeconds,
   lastSyncAt,
   now,
   syncing,
+  autoSyncSeconds,
 }) {
-  const cap = storageUi?.cap ?? Math.floor(resources.storage_cap ?? 0)
+  const cap = Math.max(1, Number(storageUi?.cap ?? resources.storage_cap ?? 1))
 
   const rotateStyle = syncing
     ? { display: "inline-block", animation: "spin 0.9s linear infinite" }
     : { display: "inline-block" }
 
-  // Si ya está al cap, producción efectiva visible = 0/h (porque no acumula más)
+  const plantsNow = Number(resources.plants ?? 0)
+  const bonesNow = Number(resources.bones ?? 0)
+  const meatNow = Number(resources.meat ?? 0)
+
+  // Si ya está al cap, producción efectiva visible = 0/h
   const effRates = {
-    wood: (resources.wood >= cap) ? 0 : ratesPerHour.wood,
-    bones: (resources.bones >= cap) ? 0 : ratesPerHour.bones,
-    food: (resources.food >= cap) ? 0 : ratesPerHour.food,
+    plants: plantsNow >= cap ? 0 : Number(ratesPerHour?.plants ?? 0),
+    bones: bonesNow >= cap ? 0 : Number(ratesPerHour?.bones ?? 0),
+    meat: meatNow >= cap ? 0 : Number(ratesPerHour?.meat ?? 0),
   }
+
+  function getLeadKey() {
+    const capVal = Math.max(1, Number(cap || 1))
+    const pPct = (plantsNow / capVal) * 100
+    const bPct = (bonesNow / capVal) * 100
+    const mPct = (meatNow / capVal) * 100
+
+    let leadKey = "plants"
+    let leadPct = pPct
+    if (bPct > leadPct) { leadKey = "bones"; leadPct = bPct }
+    if (mPct > leadPct) { leadKey = "meat"; leadPct = mPct }
+    return leadKey
+  }
+
+  const leadKey = getLeadKey()
+  const leadLabel =
+    leadKey === "plants" ? "🌿 Plantas" :
+    leadKey === "bones" ? "🦴 Huesos" :
+    "🍖 Carne"
+
+  const leadHours = storageUi?.hoursToCap?.[leadKey]
 
   return (
     <>
@@ -76,6 +98,7 @@ export default function ResourcesPanel({
       <div style={{ display: "flex", gap: 14, flexWrap: "wrap", alignItems: "center", marginBottom: 10 }}>
         <div style={{ opacity: 0.8 }}>
           Auto-recolección activa • próxima sync en <b>{nextAutoInSeconds}s</b>
+          {autoSyncSeconds ? <span style={{ opacity: 0.8 }}> (cada {autoSyncSeconds}s)</span> : null}
         </div>
         <div style={{ opacity: 0.8 }}>
           Última sincronización: <b><Since lastSyncAt={lastSyncAt} now={now} /></b>
@@ -85,18 +108,18 @@ export default function ResourcesPanel({
       <div style={{ display: "grid", gap: 12 }}>
         <div>
           <div style={{ display: "flex", justifyContent: "space-between" }}>
-            <div>🌲 Madera: <b>{Math.floor(resources.wood)}</b> / {Math.floor(cap)}</div>
-            <div style={{ opacity: 0.75 }}>{Math.floor(storageUi?.wPct ?? 0)}%</div>
+            <div>🌿 Plantas: <b>{Math.floor(plantsNow)}</b> / {Math.floor(cap)}</div>
+            <div style={{ opacity: 0.75 }}>{Math.floor(storageUi?.pPct ?? 0)}%</div>
           </div>
-          <Bar pct={storageUi?.wPct ?? 0} />
+          <Bar pct={storageUi?.pPct ?? 0} />
           <div style={{ marginTop: 6, opacity: 0.85, fontSize: 13 }}>
-            +{Math.floor(effRates.wood)}/h • Lleno en: <b>{fmtTimeFromHours(storageUi?.hoursToCap?.wood)}</b>
+            +{Math.floor(effRates.plants)}/h • Lleno en: <b>{fmtTimeFromHours(storageUi?.hoursToCap?.plants)}</b>
           </div>
         </div>
 
         <div>
           <div style={{ display: "flex", justifyContent: "space-between" }}>
-            <div>🦴 Huesos: <b>{Math.floor(resources.bones)}</b> / {Math.floor(cap)}</div>
+            <div>🦴 Huesos: <b>{Math.floor(bonesNow)}</b> / {Math.floor(cap)}</div>
             <div style={{ opacity: 0.75 }}>{Math.floor(storageUi?.bPct ?? 0)}%</div>
           </div>
           <Bar pct={storageUi?.bPct ?? 0} />
@@ -107,23 +130,27 @@ export default function ResourcesPanel({
 
         <div>
           <div style={{ display: "flex", justifyContent: "space-between" }}>
-            <div>🍖 Comida: <b>{Math.floor(resources.food)}</b> / {Math.floor(cap)}</div>
-            <div style={{ opacity: 0.75 }}>{Math.floor(storageUi?.fPct ?? 0)}%</div>
+            <div>🍖 Carne: <b>{Math.floor(meatNow)}</b> / {Math.floor(cap)}</div>
+            <div style={{ opacity: 0.75 }}>{Math.floor(storageUi?.mPct ?? 0)}%</div>
           </div>
-          <Bar pct={storageUi?.fPct ?? 0} />
+          <Bar pct={storageUi?.mPct ?? 0} />
           <div style={{ marginTop: 6, opacity: 0.85, fontSize: 13 }}>
-            +{Math.floor(effRates.food)}/h • Lleno en: <b>{fmtTimeFromHours(storageUi?.hoursToCap?.food)}</b>
+            +{Math.floor(effRates.meat)}/h • Lleno en: <b>{fmtTimeFromHours(storageUi?.hoursToCap?.meat)}</b>
           </div>
         </div>
 
         <div style={{ marginTop: 6 }}>
           <div style={{ display: "flex", justifyContent: "space-between" }}>
-            <div>📦 Almacén (máximo llenado)</div>
+            <div>📦 Caverna de Acopio (máximo llenado)</div>
             <div style={{ opacity: 0.75 }}>{Math.floor(storageUi?.maxPct ?? 0)}%</div>
           </div>
+
           <Bar pct={storageUi?.maxPct ?? 0} />
-          <div style={{ marginTop: 6, opacity: 0.75, fontSize: 13 }}>
-            Cap actual: <b>{Math.floor(resources.storage_cap)}</b>
+
+          <div style={{ marginTop: 6, opacity: 0.85, fontSize: 13 }}>
+            Cap actual: <b>{Math.floor(Number(resources.storage_cap ?? cap))}</b> • Se llena primero: <b>{leadLabel}</b>
+            <br />
+            Lleno en: <b>{fmtTimeFromHours(leadHours)}</b>
           </div>
         </div>
       </div>
@@ -132,31 +159,7 @@ export default function ResourcesPanel({
         <button onClick={onCollect} disabled={busyCollect} title="Fuerza una actualización inmediata con el servidor">
           <span style={rotateStyle}>🔄</span> {busyCollect ? "Sincronizando..." : "Sincronizar"}
         </button>
-
-        <button onClick={onUpgradeStorage} disabled={busyUpgrade || !canUpgradeStorage}>
-          {busyUpgrade
-            ? "Mejorando..."
-            : `Mejorar almacén (→ 📦 ${storageCost ? Math.floor(storageCost.next_cap) : "..."})`}
-        </button>
       </div>
-
-      {storageCost ? (
-        <div style={{ marginTop: 10, opacity: 0.9 }}>
-          Almacén lvl <b>{storageCost.current_level}</b> → <b>{storageCost.next_level}</b> | Próxima cap: 📦{" "}
-          <b>{Math.floor(storageCost.next_cap)}</b>
-          <br />
-          Costo mejora: 🌲 {Math.floor(storageCost.wood_cost)} / 🦴 {Math.floor(storageCost.bones_cost)} / 🍖{" "}
-          {Math.floor(storageCost.food_cost)}
-        </div>
-      ) : (
-        <p style={{ marginTop: 10, opacity: 0.85 }}>Cargando costo del almacén...</p>
-      )}
-
-      {storageCost && !canUpgradeStorage && (
-        <p style={{ marginTop: 6, opacity: 0.65 }}>
-          Te faltan recursos para mejorar el almacén.
-        </p>
-      )}
     </>
   )
 }

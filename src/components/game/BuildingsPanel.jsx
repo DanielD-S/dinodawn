@@ -1,11 +1,18 @@
 const BUILDING_LABELS = {
-  sawmill: "🪵 Aserradero",
-  bonepit: "🦴 Hoyo de Huesos",
-  farm: "🍖 Granja",
+  bosque_domado: "🌿 Bosque Domado",
+  nido_caza: "🍖 Nido de Caza",
+  deposito_restos: "🦴 Depósito de Restos",
+  caverna_acopio: "📦 Caverna de Acopio",
+  fosa_dominio: "🦖 Fosa de Dominio",
+  santuario_incubacion: "🥚 Santuario de Incubación",
+  fortaleza_colmillos: "🏰 Fortaleza de Colmillos",
+  torre_vigilancia: "🗼 Torre de Vigilancia",
+  circulo_fuego: "🔥 Círculo de Fuego",
+  zona_trueque: "🔁 Zona de Trueque",
+  totem_tribu: "🗿 Tótem de Tribu",
 }
 
 function n(x) {
-  // convierte numeric/string/null a número seguro
   const v = Number(x)
   return Number.isFinite(v) ? v : 0
 }
@@ -29,38 +36,55 @@ export default function BuildingsPanel({ buildings = [], onUpgrade, busyUpgradeT
           const name = BUILDING_LABELS[b.building_type] ?? b.building_type
           const busy = busyUpgradeType === b.building_type
 
-          const wph = n(b.prod_wood_per_hour)
+          const pph = n(b.prod_plants_per_hour)
           const bph = n(b.prod_bones_per_hour)
-          const fph = n(b.prod_food_per_hour)
+          const mph = n(b.prod_meat_per_hour)
+          const totalProd = pph + bph + mph
 
-          const cw = n(b.cost_wood)
+          const cp = n(b.cost_plants)
           const cb = n(b.cost_bones)
-          const cf = n(b.cost_food)
+          const cm = n(b.cost_meat)
 
           return (
-            <li key={b.id} style={{ marginBottom: 14 }}>
+            <li key={b.id ?? b.building_type} style={{ marginBottom: 14 }}>
               <div style={{ fontWeight: 800 }}>
                 {name} — Nivel {b.level} {b.is_max ? "(MAX)" : ""}
               </div>
 
-              <div style={{ opacity: 0.85, marginTop: 4 }}>
-                Producción:{" "}
-                <b>
-                  +{Math.floor(wph)} 🌲/h · +{Math.floor(bph)} 🦴/h · +{Math.floor(fph)} 🍖/h
-                </b>
-              </div>
+              {totalProd > 0 ? (
+                <div style={{ opacity: 0.85, marginTop: 4 }}>
+                  Producción:{" "}
+                  <b>
+                    +{Math.floor(pph)} 🌿/h · +{Math.floor(bph)} 🦴/h · +{Math.floor(mph)} 🍖/h
+                  </b>
+                </div>
+              ) : (
+                <div style={{ opacity: 0.75, marginTop: 4 }}>No produce recursos.</div>
+              )}
 
-              {!b.is_max && (
+              {!b.is_max && b.can_upgrade && (
                 <div style={{ opacity: 0.85, marginTop: 4 }}>
                   Costo mejora:{" "}
                   <b>
-                    {Math.floor(cw)} 🌲 · {Math.floor(cb)} 🦴 · {Math.floor(cf)} 🍖
+                    {Math.floor(cp)} 🌿 · {Math.floor(cb)} 🦴 · {Math.floor(cm)} 🍖
                   </b>
                 </div>
               )}
 
+              {!b.can_upgrade && !b.is_max && (
+                <div style={{ opacity: 0.75, marginTop: 4 }}>
+                  Este edificio es de nivel único.
+                </div>
+              )}
+
               <div style={{ marginTop: 8 }}>
-                <button disabled={b.is_max || busy} onClick={() => onUpgrade?.(b.building_type)}>
+                <button
+                  disabled={b.is_max || !b.can_upgrade || busy}
+                  onClick={() => {
+                    if (b.is_max || !b.can_upgrade || busy) return
+                    onUpgrade?.(b.building_type)
+                  }}
+                >
                   {b.is_max ? "Nivel máximo" : busy ? "Mejorando..." : "Mejorar"}
                 </button>
               </div>

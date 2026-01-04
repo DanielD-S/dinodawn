@@ -1,11 +1,11 @@
 import { useEffect, useMemo, useRef, useState } from "react"
+
 import {
   bootstrapPlayer,
   getVillage,
   getResources,
   collectResources,
-  upgradeStorage,
-  getStorageUpgradeCost,
+  getProductionRates,
 } from "../services/playerService"
 
 import { getDinosaurs, trainDinosaur, claimTrainedDinosaurs } from "../services/dinosaursService"
@@ -31,6 +31,20 @@ import GameMenuTop from "../components/game/GameMenuTop"
 import { getMyBuildingsView, upgradeBuilding } from "../services/buildingsService"
 import BuildingsPanel from "../components/game/BuildingsPanel"
 
+async function safeGetVillageAndResources() {
+  // 1er intento normal
+  try {
+    const [v, r] = await Promise.all([getVillage(), getResources()])
+    return { v, r, retried: false }
+  } catch (e) {
+    // fallback: re-bootstrap y reintentar 1 vez (útil si no existen filas aún)
+    console.warn("safeGetVillageAndResources first try failed:", e)
+    await bootstrapPlayer("Mi Aldea")
+    const [v, r] = await Promise.all([getVillage(), getResources()])
+    return { v, r, retried: true }
+  }
+}
+
 export default function Game() {
   const [loading, setLoading] = useState(true)
   const { busy, setFlag, anyBusy } = useBusy()
@@ -39,7 +53,7 @@ export default function Game() {
   const [error, setError] = useState("")
   const [village, setVillage] = useState(null)
   const [resources, setResources] = useState(null)
-  const [storageCost, setStorageCost] = useState(null)
+  const [production, setProduction] = useState(null)
 
   const [dinosaurs, setDinosaurs] = useState([])
   const [creatures, setCreatures] = useState([])
@@ -58,7 +72,15 @@ export default function Game() {
   }
 
   async function refreshBuildings() {
-    setBuildings(await getMyBuildingsView())
+    const b = await getMyBuildingsView()
+    setBuildings(b)
+    return b
+  }
+
+  async function refreshProduction() {
+    const pr = await getProductionRates()
+    setProduction(pr)
+    return pr
   }
 
   async function refreshPve() {
@@ -68,11 +90,10 @@ export default function Game() {
     setReports(rr)
   }
 
-  async function refreshVillageResourcesAndCost() {
-    const [v, r, c] = await Promise.all([getVillage(), getResources(), getStorageUpgradeCost()])
+  async function refreshVillageAndResources() {
+    const { v, r } = await safeGetVillageAndResources()
     setVillage(v)
     setResources(r)
-    setStorageCost(c)
   }
 
   // Limpia selección si dinos dejan de estar idle
@@ -81,18 +102,14 @@ export default function Game() {
     setSelectedDinos((prev) => prev.filter((id) => idleIds.has(id)))
   }, [dinosaurs])
 
-  // ✅ Rates/h desde edificios (FUENTE DE VERDAD)
   const ratesPerHour = useMemo(() => {
-    if (!buildings || buildings.length === 0) return { wood: 0, bones: 0, food: 0 }
-    return buildings.reduce(
-      (acc, b) => ({
-        wood: acc.wood + Number(b.prod_wood_per_hour || 0),
-        bones: acc.bones + Number(b.prod_bones_per_hour || 0),
-        food: acc.food + Number(b.prod_food_per_hour || 0),
-      }),
-      { wood: 0, bones: 0, food: 0 }
-    )
-  }, [buildings])
+    if (!production) return { plants: 0, bones: 0, meat: 0 }
+    return {
+      plants: Number(production.plants_per_hour || 0),
+      bones: Number(production.bones_per_hour || 0),
+      meat: Number(production.meat_per_hour || 0),
+    }
+  }, [production])
 
   // INIT
   useEffect(() => {
@@ -103,10 +120,8 @@ export default function Game() {
       try {
         await bootstrapPlayer("Mi Aldea")
 
-        const [v, r, c, d, b, cc, aa, rr] = await Promise.all([
-          getVillage(),
-          getResources(),
-          getStorageUpgradeCost(),
+        const [{ v, r }, d, b, cc, aa, rr] = await Promise.all([
+          safeGetVillageAndResources(),
           getDinosaurs(),
           getMyBuildingsView(),
           getCreatures(),
@@ -117,15 +132,21 @@ export default function Game() {
         if (!alive) return
         setVillage(v)
         setResources(r)
-        setStorageCost(c)
         setDinosaurs(d)
         setBuildings(b)
         setCreatures(cc)
         setAttacks(aa)
         setReports(rr)
+
+        // Producción depende de buildings_view (playerService ya suma desde get_my_buildings_view)
+        const pr = await getProductionRates()
+        if (!alive) return
+        setProduction(pr)
+
         setLastSyncAt(Date.now())
       } catch (e) {
         if (!alive) return
+        console.error("INIT error:", e)
         setError(e?.message ?? "Error desconocido")
       } finally {
         if (!alive) return
@@ -133,10 +154,11 @@ export default function Game() {
       }
     }
     init()
-    return () => { alive = false }
+    return () => {
+      alive = false
+    }
   }, [])
 
-  // ✅ Sync centralizado (auto + manual)
   async function syncNow() {
     if (syncingRef.current) return
     syncingRef.current = true
@@ -144,20 +166,13 @@ export default function Game() {
       const updated = await collectResources()
       setResources(updated)
       setLastSyncAt(Date.now())
-      setStorageCost(await getStorageUpgradeCost())
+    } catch (e) {
+      console.error("syncNow error:", e)
+      throw e
     } finally {
       syncingRef.current = false
     }
   }
-
-  const canUpgradeStorage = useMemo(() => {
-    if (!resources || !storageCost) return false
-    return (
-      Number(resources.wood) >= Number(storageCost.wood_cost) &&
-      Number(resources.bones) >= Number(storageCost.bones_cost) &&
-      Number(resources.food) >= Number(storageCost.food_cost)
-    )
-  }, [resources, storageCost])
 
   const trainingCount = useMemo(
     () => dinosaurs.filter((d) => d.status === "training").length,
@@ -166,25 +181,21 @@ export default function Game() {
 
   const badges = useMemo(() => {
     const activeAttacks = attacks.filter((a) => a.status !== "resolved").length
-    return {
-      pve: activeAttacks,
-      reports: reports.length,
-    }
+    return { pve: activeAttacks, reports: reports.length }
   }, [attacks, reports])
 
-  // ✅ Métricas UI de cap/tiempo a llenar (con rates reales)
   const storageUi = useMemo(() => {
     if (!resources) return null
 
     const cap = Math.max(1, Number(resources.storage_cap ?? 1))
-    const w = Number(resources.wood ?? 0)
+    const p = Number(resources.plants ?? 0)
     const b = Number(resources.bones ?? 0)
-    const f = Number(resources.food ?? 0)
+    const m = Number(resources.meat ?? 0)
 
-    const wPct = Math.min(100, Math.max(0, (w / cap) * 100))
+    const pPct = Math.min(100, Math.max(0, (p / cap) * 100))
     const bPct = Math.min(100, Math.max(0, (b / cap) * 100))
-    const fPct = Math.min(100, Math.max(0, (f / cap) * 100))
-    const maxPct = Math.max(wPct, bPct, fPct)
+    const mPct = Math.min(100, Math.max(0, (m / cap) * 100))
+    const maxPct = Math.max(pPct, bPct, mPct)
 
     function hoursToCap(current, perHour) {
       if (current >= cap) return 0
@@ -194,36 +205,34 @@ export default function Game() {
 
     return {
       cap,
-      wPct,
+      pPct,
       bPct,
-      fPct,
+      mPct,
       maxPct,
       hoursToCap: {
-        wood: hoursToCap(w, ratesPerHour.wood),
+        plants: hoursToCap(p, ratesPerHour.plants),
         bones: hoursToCap(b, ratesPerHour.bones),
-        food: hoursToCap(f, ratesPerHour.food),
+        meat: hoursToCap(m, ratesPerHour.meat),
       },
     }
   }, [resources, ratesPerHour])
 
-  // ✅ AUTO-SYNC DINÁMICO (más rápido cuando estás por llenar)
   const autoSyncSeconds = useMemo(() => {
-    // si no hay recursos, default
     if (!resources || !storageUi) return 10
 
     const totalRate =
-      Number(ratesPerHour.wood || 0) + Number(ratesPerHour.bones || 0) + Number(ratesPerHour.food || 0)
+      Number(ratesPerHour.plants || 0) +
+      Number(ratesPerHour.bones || 0) +
+      Number(ratesPerHour.meat || 0)
 
-    // si no produces nada => sync lento
     if (totalRate <= 0) return 30
 
     const maxPct = Number(storageUi.maxPct || 0)
 
-    // toma el menor tiempo a llenarse entre los que efectivamente producen
     const candidates = [
-      storageUi.hoursToCap.wood,
+      storageUi.hoursToCap.plants,
       storageUi.hoursToCap.bones,
-      storageUi.hoursToCap.food,
+      storageUi.hoursToCap.meat,
     ]
       .filter((h) => h !== null && h !== undefined)
       .map((h) => Number(h))
@@ -231,21 +240,19 @@ export default function Game() {
     const minHours = candidates.length ? Math.min(...candidates) : null
     const minMinutes = minHours === null ? null : minHours * 60
 
-    // reglas simples (MVP)
-    if (maxPct >= 99) return 25 // casi lleno: no necesitas machacar el backend
+    if (maxPct >= 99) return 25
     if (minMinutes !== null && minMinutes <= 5) return 3
     if (minMinutes !== null && minMinutes <= 15) return 5
     if (minMinutes !== null && minMinutes <= 60) return 10
     return 20
   }, [resources, storageUi, ratesPerHour])
 
-  // ✅ Auto-recolección: cada autoSyncSeconds mientras pestaña visible
   useEffect(() => {
     if (!resources) return
 
     const tick = async () => {
       if (document.visibilityState !== "visible") return
-      if (busy.hardRefresh || busy.upgradeStorage || busy.upgradeBuildingType) return
+      if (busy.hardRefresh || busy.upgradeBuildingType) return
       try {
         await syncNow()
       } catch {
@@ -256,7 +263,7 @@ export default function Game() {
     const s = Math.max(3, Number(autoSyncSeconds || 10))
     const id = setInterval(tick, s * 1000)
     return () => clearInterval(id)
-  }, [resources, busy.hardRefresh, busy.upgradeStorage, busy.upgradeBuildingType, autoSyncSeconds])
+  }, [resources, busy.hardRefresh, busy.upgradeBuildingType, autoSyncSeconds])
 
   async function handleCollect() {
     setFlag("collect", true)
@@ -267,21 +274,6 @@ export default function Game() {
       setError(e?.message ?? "Error al sincronizar")
     } finally {
       setFlag("collect", false)
-    }
-  }
-
-  async function handleUpgradeStorage() {
-    setFlag("upgradeStorage", true)
-    setError("")
-    try {
-      const updated = await upgradeStorage()
-      setResources(updated)
-      setLastSyncAt(Date.now())
-      setStorageCost(await getStorageUpgradeCost())
-    } catch (e) {
-      setError(e?.message ?? "Error al mejorar almacén")
-    } finally {
-      setFlag("upgradeStorage", false)
     }
   }
 
@@ -319,12 +311,8 @@ export default function Game() {
     setFlag("hardRefresh", true)
     setError("")
     try {
-      await Promise.all([
-        refreshVillageResourcesAndCost(),
-        refreshDinosaurs(),
-        refreshPve(),
-        refreshBuildings(),
-      ])
+      await Promise.all([refreshVillageAndResources(), refreshDinosaurs(), refreshPve(), refreshBuildings()])
+      await refreshProduction()
       setLastSyncAt(Date.now())
     } catch (e) {
       setError(e?.message ?? "Error al refrescar")
@@ -355,17 +343,10 @@ export default function Game() {
       await resolvePveAttack(attackId)
       await refreshDinosaurs()
 
-      const [r, a, rep, c] = await Promise.all([
-        getResources(),
-        getMyAttacks(),
-        getReports(),
-        getStorageUpgradeCost(),
-      ])
-
+      const [r, a, rep] = await Promise.all([getResources(), getMyAttacks(), getReports()])
       setResources(r)
       setAttacks(a)
       setReports(rep)
-      setStorageCost(c)
       setLastSyncAt(Date.now())
     } catch (e) {
       setError(e?.message ?? "Error al resolver")
@@ -379,11 +360,10 @@ export default function Game() {
     setError("")
     try {
       const result = await upgradeBuilding(buildingType)
-
       if (result?.resources) setResources(result.resources)
-      else if (result?.wood !== undefined) setResources(result)
 
-      await refreshBuildings() // ✅ actualiza ratesPerHour automáticamente
+      await refreshBuildings()
+      await refreshProduction()
       setLastSyncAt(Date.now())
     } catch (e) {
       setError(e?.message ?? "Error al mejorar edificio")
@@ -410,10 +390,7 @@ export default function Game() {
     )
   }
 
-  const menuBadges = {
-    ...badges,
-    buildings: buildings?.length ? buildings.length : 0,
-  }
+  const menuBadges = { ...badges, buildings: buildings?.length ? buildings.length : 0 }
 
   return (
     <div style={{ padding: 24, fontFamily: "system-ui" }}>
@@ -430,19 +407,15 @@ export default function Game() {
       {view === "village" && (
         <ResourcesPanel
           resources={resources}
-          storageCost={storageCost}
-          canUpgradeStorage={canUpgradeStorage}
           onCollect={handleCollect}
-          onUpgradeStorage={handleUpgradeStorage}
           busyCollect={busy.collect}
-          busyUpgrade={busy.upgradeStorage}
           ratesPerHour={ratesPerHour}
           storageUi={storageUi}
           nextAutoInSeconds={nextAutoInSeconds}
           lastSyncAt={lastSyncAt}
           now={now}
           syncing={busy.collect}
-          autoSyncSeconds={autoSyncSeconds} // 👈 NUEVO (para mostrarlo)
+          autoSyncSeconds={autoSyncSeconds}
         />
       )}
 

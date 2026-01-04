@@ -57,8 +57,8 @@ export default function PvePanel({
                 <b>{c.name}</b> (lvl {c.level}, {c.biome}) — ATK {c.attack} / DEF{" "}
                 {c.defense} / HP {c.hp}
                 <br />
-                Loot: 🌲{c.loot_wood} 🦴{c.loot_bones} 🍖{c.loot_food} | ADN{" "}
-                {Math.round(c.dna_chance * 100)}%
+                Loot: 🌿{c.loot_plants} 🦴{c.loot_bones} 🍖{c.loot_meat} | ADN{" "}
+                {Math.round(Number(c.dna_chance ?? 0) * 100)}%
                 <br />
                 <button
                   disabled={busyStartAttackId !== null || selectedDinos.length === 0}

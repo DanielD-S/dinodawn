@@ -5,9 +5,6 @@ export default function GameMenuTop({ view, setView, disabled, badges = {} }) {
     { id: "dinosaurs", label: "🦖 Dinosaurios" },
     { id: "pve", label: "⚔️ PvE" },
     { id: "reports", label: "📜 Reportes" },
- 
-
-    
   ]
 
   return (
@@ -29,7 +26,10 @@ export default function GameMenuTop({ view, setView, disabled, badges = {} }) {
         return (
           <button
             key={it.id}
-            onClick={() => setView(it.id)}
+            onClick={() => {
+              if (disabled) return
+              setView(it.id)
+            }}
             disabled={disabled}
             style={{
               padding: "8px 12px",
