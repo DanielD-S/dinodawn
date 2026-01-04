@@ -30,7 +30,13 @@ export async function collectResources() {
   return data
 }
 export async function upgradeStorage() {
-  const { data, error } = await supabase.rpc("upgrade_storage")
+  const { data, error } = await supabase.rpc("upgrade_storage_scaled")
+  if (error) throw error
+  return data
+}
+
+export async function getStorageUpgradeCost() {
+  const { data, error } = await supabase.rpc("get_storage_upgrade_cost")
   if (error) throw error
   return data
 }
