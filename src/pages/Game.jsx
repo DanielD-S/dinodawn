@@ -441,16 +441,17 @@ export default function Game() {
       )}
 
       {view === "buildings" && (
-        <BuildingsPanel
-          buildings={buildings}
-          onUpgrade={handleUpgradeBuilding}
-          busyUpgradeType={busy.upgradeBuildingType}
-          // (Opcional pero recomendado para consistencia de UI en BuildingsPanel)
-          production={production}
-          ratesPerHour={ratesPerHour}
-          resources={resources}
-        />
-      )}
+  <BuildingsPanel
+    buildings={buildings}
+    resources={resources}
+    ratesPerHour={ratesPerHour}
+    now={now}
+    lastSyncAt={lastSyncAt}
+    onUpgrade={handleUpgradeBuilding}
+    busyUpgradeType={busy.upgradeBuildingType}
+  />
+)}
+
 
       {view === "dinosaurs" && (
         <DinosaursPanel
