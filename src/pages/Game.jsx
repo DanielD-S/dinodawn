@@ -40,6 +40,8 @@ async function safeGetVillageAndResources() {
     // fallback: re-bootstrap y reintentar 1 vez (útil si no existen filas aún)
     console.warn("safeGetVillageAndResources first try failed:", e)
     await bootstrapPlayer("Mi Aldea")
+    // 👇 APLICAR STORAGE CAP (1 sola vez por sesión, es barato)
+    await supabase.rpc("apply_my_storage_cap")
     const [v, r] = await Promise.all([getVillage(), getResources()])
     return { v, r, retried: true }
   }
@@ -166,6 +168,7 @@ export default function Game() {
       const updated = await collectResources()
       setResources(updated)
       setLastSyncAt(Date.now())
+      return updated
     } catch (e) {
       console.error("syncNow error:", e)
       throw e
@@ -311,7 +314,12 @@ export default function Game() {
     setFlag("hardRefresh", true)
     setError("")
     try {
-      await Promise.all([refreshVillageAndResources(), refreshDinosaurs(), refreshPve(), refreshBuildings()])
+      await Promise.all([
+        refreshVillageAndResources(),
+        refreshDinosaurs(),
+        refreshPve(),
+        refreshBuildings(),
+      ])
       await refreshProduction()
       setLastSyncAt(Date.now())
     } catch (e) {
@@ -355,15 +363,28 @@ export default function Game() {
     }
   }
 
+  // ✅ MODIFICACIÓN CLAVE: sincronizar (persistir) antes de intentar mejorar
   async function handleUpgradeBuilding(buildingType) {
     setFlag("upgradeBuildingType", buildingType)
     setError("")
     try {
-      const result = await upgradeBuilding(buildingType)
-      if (result?.resources) setResources(result.resources)
+      // 1) Persistir producción pendiente para que el RPC valide contra DB correctamente
+      await syncNow()
 
-      await refreshBuildings()
-      await refreshProduction()
+      // 2) Upgrade (valida y descuenta en DB)
+      const result = await upgradeBuilding(buildingType)
+
+      // 3) Rehidratar desde DB (autoridad) para evitar desfases UI vs DB
+      const [b, pr, r] = await Promise.all([
+        getMyBuildingsView(),
+        getProductionRates(),
+        getResources(),
+      ])
+
+      setBuildings(b)
+      setProduction(pr)
+      setResources(result?.resources ?? r)
+
       setLastSyncAt(Date.now())
     } catch (e) {
       setError(e?.message ?? "Error al mejorar edificio")
@@ -424,6 +445,10 @@ export default function Game() {
           buildings={buildings}
           onUpgrade={handleUpgradeBuilding}
           busyUpgradeType={busy.upgradeBuildingType}
+          // (Opcional pero recomendado para consistencia de UI en BuildingsPanel)
+          production={production}
+          ratesPerHour={ratesPerHour}
+          resources={resources}
         />
       )}
 
