@@ -40,3 +40,22 @@ export async function getStorageUpgradeCost() {
   if (error) throw error
   return data
 }
+export async function getProductionRates() {
+  const { data, error } = await supabase.rpc("get_production_rates")
+  if (error) throw error
+  return data
+}
+
+export async function upgradeBuilding(buildingType) {
+  const { data, error } = await supabase.rpc("upgrade_building", {
+    p_building_type: buildingType,
+  })
+  if (error) throw error
+  return data // { resources, building, paid, next_cost, max_level }
+}
+
+export async function ensureBaseBuildings() {
+  const { data, error } = await supabase.rpc("ensure_base_buildings")
+  if (error) throw error
+  return data
+}

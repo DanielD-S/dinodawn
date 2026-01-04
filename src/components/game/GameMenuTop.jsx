@@ -1,9 +1,13 @@
 export default function GameMenuTop({ view, setView, disabled, badges = {} }) {
   const items = [
     { id: "village", label: "🏡 Aldea" },
+    { id: "buildings", label: "🏗️ Edificios" },
     { id: "dinosaurs", label: "🦖 Dinosaurios" },
     { id: "pve", label: "⚔️ PvE" },
     { id: "reports", label: "📜 Reportes" },
+ 
+
+    
   ]
 
   return (
