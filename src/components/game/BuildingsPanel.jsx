@@ -1,3 +1,6 @@
+import "../../styles/BuildingsPanel.css"
+
+
 const BUILDING_LABELS = {
   bosque_domado: "🌿 Bosque Domado",
   nido_caza: "🍖 Nido de Caza",
@@ -74,10 +77,13 @@ export default function BuildingsPanel({
 }) {
   if (!Array.isArray(buildings) || buildings.length === 0) {
     return (
-      <div>
-        <h2>🏗️ Edificios</h2>
-        <p style={{ opacity: 0.75 }}>No tienes edificios cargados.</p>
-      </div>
+      <section className="tribal-panel buildings-panel">
+        <div className="tribal-panel__head">
+          <h2 className="tribal-title">🏗️ Edificios</h2>
+        </div>
+        <div className="tribal-divider" />
+        <p className="tribal-muted">No tienes edificios cargados.</p>
+      </section>
     )
   }
 
@@ -100,10 +106,19 @@ export default function BuildingsPanel({
   const liveM = clampToCap(snapM + (rateM / 3600) * elapsedSec, cap)
 
   return (
-    <div>
-      <h2>🏗️ Edificios</h2>
+    <section className="tribal-panel buildings-panel">
+      <div className="tribal-panel__head">
+        <h2 className="tribal-title">🏗️ Edificios</h2>
 
-      <ul style={{ paddingLeft: 18 }}>
+        <div className="buildings-panel__meta">
+          <span className="chip">Cap: <b>{Math.floor(cap || 0)}</b> 📦</span>
+          <span className="chip">Vivo: <b>{Math.floor(liveP)}</b> 🌿 · <b>{Math.floor(liveB)}</b> 🦴 · <b>{Math.floor(liveM)}</b> 🍖</span>
+        </div>
+      </div>
+
+      <div className="tribal-divider" />
+
+      <ul className="buildings-list">
         {buildings.map((b) => {
           const name = BUILDING_LABELS[b.building_type] ?? b.building_type
           const busy = busyUpgradeType === b.building_type
@@ -126,19 +141,20 @@ export default function BuildingsPanel({
           const canAffordLive = liveP >= cp && liveB >= cb && liveM >= cm
 
           // ETA también usando recursos EN VIVO
-          const eta = !canAffordLive && canUpgrade
-            ? etaSeconds({
-                haveP: liveP,
-                haveB: liveB,
-                haveM: liveM,
-                costP: cp,
-                costB: cb,
-                costM: cm,
-                rateP,
-                rateB,
-                rateM,
-              })
-            : 0
+          const eta =
+            !canAffordLive && canUpgrade
+              ? etaSeconds({
+                  haveP: liveP,
+                  haveB: liveB,
+                  haveM: liveM,
+                  costP: cp,
+                  costB: cb,
+                  costM: cm,
+                  rateP,
+                  rateB,
+                  rateM,
+                })
+              : 0
 
           const disabled = !canUpgrade || busy || !canAffordLive
 
@@ -150,55 +166,76 @@ export default function BuildingsPanel({
           else buttonText = eta === null ? "Falta producción" : `⏳ Disponible en ${formatHMS(eta)}`
 
           return (
-            <li key={b.id ?? b.building_type} style={{ marginBottom: 14 }}>
-              <div style={{ fontWeight: 800 }}>
-                {name} — Nivel {b.level} {b.is_max ? "(MAX)" : ""}
+            <li key={b.id ?? b.building_type} className={`building-card ${b.is_max ? "is-max" : ""}`}>
+              <div className="building-card__top">
+                <div className="building-card__title">
+                  <div className="building-name">{name}</div>
+                  <div className="building-level">
+                    Nivel <b>{b.level}</b> {b.is_max ? <span className="tag">MAX</span> : null}
+                  </div>
+                </div>
+
+                <div className="building-card__badge">
+                  <span className={`badge ${canAffordLive ? "ok" : "warn"}`}>
+                    {canAffordLive ? "LISTO" : "EN PROGRESO"}
+                  </span>
+                </div>
               </div>
 
-              {hasProd ? (
-                <div style={{ opacity: 0.85, marginTop: 4 }}>
-                  Producción:{" "}
-                  <b>
-                    {prodLines.map((x, idx) => (
-                      <span key={x.icon}>
-                        +{Math.floor(n(x.value))} {x.icon}/h
-                        {idx < prodLines.length - 1 ? " · " : ""}
-                      </span>
-                    ))}
-                  </b>
+              <div className="building-card__row">
+                {hasProd ? (
+                  <div className="line">
+                    <span className="label">Producción</span>
+                    <span className="value">
+                      {prodLines.map((x, idx) => (
+                        <span key={x.icon} className="mono">
+                          +{Math.floor(n(x.value))} {x.icon}/h
+                          {idx < prodLines.length - 1 ? <span className="sep"> · </span> : null}
+                        </span>
+                      ))}
+                    </span>
+                  </div>
+                ) : (
+                  <div className="line">
+                    <span className="label">Producción</span>
+                    <span className="value muted">No produce recursos</span>
+                  </div>
+                )}
+              </div>
+
+              {canUpgrade ? (
+                <div className="building-card__row">
+                  <div className="line">
+                    <span className="label">Costo</span>
+                    <span className="value">
+                      <b>{cp}</b> 🌿 <span className="sep">·</span> <b>{cb}</b> 🦴 <span className="sep">·</span> <b>{cm}</b> 🍖
+                    </span>
+                  </div>
+
+                  {!canAffordLive && (
+                    <div className="hint">
+                      ❌ No alcanza con tus recursos actuales.
+                      {eta ? <span className="hint__eta"> ({eta === null ? "sin ETA" : `ETA ${formatHMS(eta)}`})</span> : null}
+                    </div>
+                  )}
                 </div>
               ) : (
-                <div style={{ opacity: 0.75, marginTop: 4 }}>No produce recursos.</div>
+                !b.is_max && (
+                  <div className="building-card__row">
+                    <div className="hint">Este edificio es de nivel único.</div>
+                  </div>
+                )
               )}
 
-              {canUpgrade && (
-                <div style={{ opacity: 0.85, marginTop: 4 }}>
-                  Costo mejora:{" "}
-                  <b>
-                    {cp} 🌿 · {cb} 🦴 · {cm} 🍖
-                  </b>
-                </div>
-              )}
-
-              {!b.can_upgrade && !b.is_max && (
-                <div style={{ opacity: 0.75, marginTop: 4 }}>
-                  Este edificio es de nivel único.
-                </div>
-              )}
-
-              {canUpgrade && !canAffordLive && (
-                <div style={{ opacity: 0.75, marginTop: 4 }}>
-                  ❌ No alcanza con tus recursos actuales.
-                </div>
-              )}
-
-              <div style={{ marginTop: 8 }}>
+              <div className="building-card__actions">
                 <button
+                  className="tribal-btn"
                   disabled={disabled}
                   onClick={() => {
                     if (disabled) return
                     onUpgrade?.(b.building_type)
                   }}
+                  aria-label={`Mejorar ${name}`}
                 >
                   {buttonText}
                 </button>
@@ -207,6 +244,6 @@ export default function BuildingsPanel({
           )
         })}
       </ul>
-    </div>
+    </section>
   )
 }

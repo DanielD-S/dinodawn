@@ -1,0 +1,82 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="900" height="520" viewBox="0 0 900 520">
+  <defs>
+    <linearGradient id="wood" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#3a2517"></stop>
+      <stop offset="0.5" stop-color="#4a2f1c"></stop>
+      <stop offset="1" stop-color="#2b1a10"></stop>
+    </linearGradient>
+
+    <linearGradient id="inner" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#1b140f" stop-opacity="0.85"></stop>
+      <stop offset="1" stop-color="#0f0b08" stop-opacity="0.85"></stop>
+    </linearGradient>
+
+    <filter id="shadow" x="-30%" y="-30%" width="160%" height="160%">
+      <feDropShadow dx="0" dy="8" stdDeviation="10" flood-color="#000" flood-opacity="0.55"></feDropShadow>
+    </filter>
+
+    <filter id="grain" x="-10%" y="-10%" width="120%" height="120%">
+      <feTurbulence type="fractalNoise" baseFrequency="0.9" numOctaves="2" stitchTiles="stitch"></feTurbulence>
+      <feColorMatrix type="matrix" values="
+        0 0 0 0 0.15
+        0 0 0 0 0.10
+        0 0 0 0 0.05
+        0 0 0 0.18 0"></feColorMatrix>
+      <feComposite operator="in" in2="SourceGraphic"></feComposite>
+    </filter>
+  </defs>
+
+  <!-- Outer wood frame -->
+  <path filter="url(#shadow)" fill="url(#wood)" stroke="#140c07" stroke-width="10" d="M70,35
+       L830,35
+       L865,70
+       L865,450
+       L830,485
+       L70,485
+       L35,450
+       L35,70
+       Z"></path>
+
+  <!-- Carved notches (top) -->
+  <path fill="#1a0f09" opacity="0.65" d="M115,35 l20,20 l-40,0 Z
+       M215,35 l20,20 l-40,0 Z
+       M315,35 l20,20 l-40,0 Z
+       M415,35 l20,20 l-40,0 Z
+       M515,35 l20,20 l-40,0 Z
+       M615,35 l20,20 l-40,0 Z
+       M715,35 l20,20 l-40,0 Z"></path>
+
+  <!-- Inner panel -->
+  <path fill="url(#inner)" stroke="#2a1a11" stroke-width="6" d="M105,90
+       L795,90
+       L820,115
+       L820,405
+       L795,430
+       L105,430
+       L80,405
+       L80,115
+       Z"></path>
+
+  <!-- Rivets -->
+  <g fill="#bfa27e" stroke="#3b2a1d" stroke-width="3" opacity="0.95">
+    <circle cx="95" cy="95" r="10"></circle><circle cx="805" cy="95" r="10"></circle>
+    <circle cx="95" cy="425" r="10"></circle><circle cx="805" cy="425" r="10"></circle>
+    <circle cx="450" cy="70" r="10"></circle><circle cx="450" cy="450" r="10"></circle>
+  </g>
+
+  <!-- Decorative side spikes -->
+  <g fill="#23150e" opacity="0.85">
+    <path d="M35,170 l30,-15 l0,30 Z"></path>
+    <path d="M35,260 l30,-15 l0,30 Z"></path>
+    <path d="M35,350 l30,-15 l0,30 Z"></path>
+
+    <path d="M865,170 l-30,-15 l0,30 Z"></path>
+    <path d="M865,260 l-30,-15 l0,30 Z"></path>
+    <path d="M865,350 l-30,-15 l0,30 Z"></path>
+  </g>
+
+  <!-- Subtle grain overlay -->
+  <g filter="url(#grain)" opacity="0.25">
+    <path fill="#ffffff" d="M70,35 L830,35 L865,70 L865,450 L830,485 L70,485 L35,450 L35,70 Z"></path>
+  </g>
+</svg>

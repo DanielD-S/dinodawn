@@ -1,3 +1,5 @@
+import "../../styles/ResourcesPanel.css"
+
 function fmtTimeFromHours(hours) {
   if (hours === null || hours === undefined) return "—"
   if (hours === 0) return "Lleno"
@@ -19,14 +21,14 @@ function clampPct(x) {
 function Bar({ pct }) {
   const p = clampPct(pct)
   return (
-    <div style={{ height: 10, borderRadius: 999, background: "#eee", overflow: "hidden" }}>
-      <div style={{ width: `${p}%`, height: "100%", background: "#111" }} />
+    <div className="rbar">
+      <div className="rbar__fill" style={{ width: `${p}%` }} />
     </div>
   )
 }
 
 function Since({ lastSyncAt, now }) {
-  if (!lastSyncAt) return <span style={{ opacity: 0.7 }}>Nunca</span>
+  if (!lastSyncAt) return <span className="muted">Nunca</span>
   const sec = Math.max(0, Math.floor((now - lastSyncAt) / 1000))
   if (sec < 60) return <span>hace {sec}s</span>
   const min = Math.floor(sec / 60)
@@ -50,10 +52,6 @@ export default function ResourcesPanel({
   autoSyncSeconds,
 }) {
   const cap = Math.max(1, Number(storageUi?.cap ?? resources.storage_cap ?? 1))
-
-  const rotateStyle = syncing
-    ? { display: "inline-block", animation: "spin 0.9s linear infinite" }
-    : { display: "inline-block" }
 
   const plantsNow = Number(resources.plants ?? 0)
   const bonesNow = Number(resources.bones ?? 0)
@@ -88,78 +86,100 @@ export default function ResourcesPanel({
   const leadHours = storageUi?.hoursToCap?.[leadKey]
 
   return (
-    <>
-      <style>{`
-        @keyframes spin { from { transform: rotate(0deg) } to { transform: rotate(360deg) } }
-      `}</style>
+    <section className="tribal-panel resources-panel">
+      <div className="resources-head">
+        <h2 className="tribal-title">📦 Recursos</h2>
 
-      <h2>Recursos</h2>
+        <div className="resources-chips">
+          <span className="chip">
+            Auto-recolección: <b>{nextAutoInSeconds}s</b>
+            {autoSyncSeconds ? <span className="muted"> (cada {autoSyncSeconds}s)</span> : null}
+          </span>
 
-      <div style={{ display: "flex", gap: 14, flexWrap: "wrap", alignItems: "center", marginBottom: 10 }}>
-        <div style={{ opacity: 0.8 }}>
-          Auto-recolección activa • próxima sync en <b>{nextAutoInSeconds}s</b>
-          {autoSyncSeconds ? <span style={{ opacity: 0.8 }}> (cada {autoSyncSeconds}s)</span> : null}
-        </div>
-        <div style={{ opacity: 0.8 }}>
-          Última sincronización: <b><Since lastSyncAt={lastSyncAt} now={now} /></b>
+          <span className="chip">
+            Última sync: <b><Since lastSyncAt={lastSyncAt} now={now} /></b>
+          </span>
+
+          <span className="chip">
+            Cap: <b>{Math.floor(cap)}</b>
+          </span>
         </div>
       </div>
 
-      <div style={{ display: "grid", gap: 12 }}>
-        <div>
-          <div style={{ display: "flex", justifyContent: "space-between" }}>
-            <div>🌿 Plantas: <b>{Math.floor(plantsNow)}</b> / {Math.floor(cap)}</div>
-            <div style={{ opacity: 0.75 }}>{Math.floor(storageUi?.pPct ?? 0)}%</div>
+      <div className="tribal-divider" />
+
+      <div className="resources-grid">
+        {/* PLANTS */}
+        <div className="res-card">
+          <div className="res-row">
+            <div className="res-left">🌿 Plantas: <b>{Math.floor(plantsNow)}</b> <span className="muted">/ {Math.floor(cap)}</span></div>
+            <div className="res-right muted">{Math.floor(storageUi?.pPct ?? 0)}%</div>
           </div>
+
           <Bar pct={storageUi?.pPct ?? 0} />
-          <div style={{ marginTop: 6, opacity: 0.85, fontSize: 13 }}>
-            +{Math.floor(effRates.plants)}/h • Lleno en: <b>{fmtTimeFromHours(storageUi?.hoursToCap?.plants)}</b>
+
+          <div className="res-sub">
+            +{Math.floor(effRates.plants)}/h <span className="dot">•</span> Lleno en: <b>{fmtTimeFromHours(storageUi?.hoursToCap?.plants)}</b>
           </div>
         </div>
 
-        <div>
-          <div style={{ display: "flex", justifyContent: "space-between" }}>
-            <div>🦴 Huesos: <b>{Math.floor(bonesNow)}</b> / {Math.floor(cap)}</div>
-            <div style={{ opacity: 0.75 }}>{Math.floor(storageUi?.bPct ?? 0)}%</div>
+        {/* BONES */}
+        <div className="res-card">
+          <div className="res-row">
+            <div className="res-left">🦴 Huesos: <b>{Math.floor(bonesNow)}</b> <span className="muted">/ {Math.floor(cap)}</span></div>
+            <div className="res-right muted">{Math.floor(storageUi?.bPct ?? 0)}%</div>
           </div>
+
           <Bar pct={storageUi?.bPct ?? 0} />
-          <div style={{ marginTop: 6, opacity: 0.85, fontSize: 13 }}>
-            +{Math.floor(effRates.bones)}/h • Lleno en: <b>{fmtTimeFromHours(storageUi?.hoursToCap?.bones)}</b>
+
+          <div className="res-sub">
+            +{Math.floor(effRates.bones)}/h <span className="dot">•</span> Lleno en: <b>{fmtTimeFromHours(storageUi?.hoursToCap?.bones)}</b>
           </div>
         </div>
 
-        <div>
-          <div style={{ display: "flex", justifyContent: "space-between" }}>
-            <div>🍖 Carne: <b>{Math.floor(meatNow)}</b> / {Math.floor(cap)}</div>
-            <div style={{ opacity: 0.75 }}>{Math.floor(storageUi?.mPct ?? 0)}%</div>
+        {/* MEAT */}
+        <div className="res-card">
+          <div className="res-row">
+            <div className="res-left">🍖 Carne: <b>{Math.floor(meatNow)}</b> <span className="muted">/ {Math.floor(cap)}</span></div>
+            <div className="res-right muted">{Math.floor(storageUi?.mPct ?? 0)}%</div>
           </div>
+
           <Bar pct={storageUi?.mPct ?? 0} />
-          <div style={{ marginTop: 6, opacity: 0.85, fontSize: 13 }}>
-            +{Math.floor(effRates.meat)}/h • Lleno en: <b>{fmtTimeFromHours(storageUi?.hoursToCap?.meat)}</b>
+
+          <div className="res-sub">
+            +{Math.floor(effRates.meat)}/h <span className="dot">•</span> Lleno en: <b>{fmtTimeFromHours(storageUi?.hoursToCap?.meat)}</b>
           </div>
         </div>
 
-        <div style={{ marginTop: 6 }}>
-          <div style={{ display: "flex", justifyContent: "space-between" }}>
-            <div>📦 Caverna de Acopio (máximo llenado)</div>
-            <div style={{ opacity: 0.75 }}>{Math.floor(storageUi?.maxPct ?? 0)}%</div>
+        {/* STORAGE */}
+        <div className="res-card storage-card">
+          <div className="res-row">
+            <div className="res-left">📦 Caverna de Acopio (máximo llenado)</div>
+            <div className="res-right muted">{Math.floor(storageUi?.maxPct ?? 0)}%</div>
           </div>
 
           <Bar pct={storageUi?.maxPct ?? 0} />
 
-          <div style={{ marginTop: 6, opacity: 0.85, fontSize: 13 }}>
-            Cap actual: <b>{Math.floor(Number(resources.storage_cap ?? cap))}</b> • Se llena primero: <b>{leadLabel}</b>
+          <div className="res-sub">
+            Cap actual: <b>{Math.floor(Number(resources.storage_cap ?? cap))}</b>
+            <span className="dot">•</span> Se llena primero: <b>{leadLabel}</b>
             <br />
             Lleno en: <b>{fmtTimeFromHours(leadHours)}</b>
           </div>
         </div>
       </div>
 
-      <div style={{ display: "flex", gap: 12, flexWrap: "wrap", marginTop: 14 }}>
-        <button onClick={onCollect} disabled={busyCollect} title="Fuerza una actualización inmediata con el servidor">
-          <span style={rotateStyle}>🔄</span> {busyCollect ? "Sincronizando..." : "Sincronizar"}
+      <div className="resources-actions">
+        <button
+          className={`tribal-btn ${syncing ? "is-syncing" : ""}`}
+          onClick={onCollect}
+          disabled={busyCollect}
+          title="Fuerza una actualización inmediata con el servidor"
+        >
+          <span className={`sync-icon ${syncing ? "spin" : ""}`}>🔄</span>
+          {busyCollect ? "Sincronizando..." : "Sincronizar"}
         </button>
       </div>
-    </>
+    </section>
   )
 }

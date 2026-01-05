@@ -1,0 +1,370 @@
+/* BuildingsPanel.css (TRIBAL UI) */
+/* Requiere:
+   public/ui/tribal-button.svg
+   public/ui/tribal-divider.svg
+   public/ui/tribal-panel-frame.svg (opcional, recomendado)
+*/
+
+.buildings-panel{
+  position: relative;
+}
+
+/* =========================
+   TRIBAL PANEL BASE (fallback)
+   ========================= */
+.tribal-panel{
+  position: relative;
+  border-radius: 18px;
+  padding: 16px;
+  border: 1px solid rgba(205,179,142,0.18);
+  background: rgba(12, 9, 7, 0.55);
+  box-shadow: 0 18px 50px rgba(0,0,0,0.55);
+  overflow: hidden;
+  isolation: isolate;
+}
+
+/* Asegura que el contenido quede arriba del frame */
+.tribal-panel > *{
+  position: relative;
+  z-index: 1;
+}
+
+/* Frame (si existe el svg en /public/ui/) */
+.tribal-panel::before{
+  content:"";
+  position:absolute;
+  inset:-18px;
+  background: url("/ui/tribal-panel-frame.svg") center/cover no-repeat;
+  opacity: 0.9;
+  pointer-events:none;
+  z-index: 0;
+}
+
+/* Títulos / texto */
+.tribal-title{
+  font-family: ui-serif, Georgia, "Times New Roman", serif;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  font-weight: 900;
+  color: rgba(205,179,142,0.95);
+  text-shadow: 0 3px 0 rgba(0,0,0,0.55);
+  margin: 0;
+}
+
+.tribal-muted{
+  color: rgba(242,234,223,0.72);
+}
+
+/* Divider */
+.tribal-divider{
+  height: 22px;
+  background: url("/ui/tribal-divider.svg") center/contain no-repeat;
+  opacity: 0.95;
+  margin: 10px 0 14px;
+}
+
+/* =========================
+   HEAD
+   ========================= */
+.tribal-panel__head{
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.buildings-panel__meta{
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  justify-content: flex-end;
+}
+
+.chip{
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 10px;
+  border-radius: 999px;
+  border: 1px solid rgba(205, 179, 142, 0.22);
+  background: rgba(12, 9, 7, 0.55);
+  box-shadow: inset 0 1px 0 rgba(255,255,255,0.06);
+  color: rgba(242, 234, 223, 0.9);
+  font-size: 12px;
+}
+
+/* =========================
+   LIST
+   ========================= */
+.buildings-list{
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: grid;
+  gap: 12px;
+}
+
+/* =========================
+   CARD
+   ========================= */
+.building-card{
+  border-radius: 16px;
+  border: 1px solid rgba(205, 179, 142, 0.18);
+  background: rgba(10, 7, 6, 0.55);
+  box-shadow: 0 14px 40px rgba(0,0,0,0.45);
+  padding: 12px 12px 10px;
+  position: relative;
+  overflow: hidden;
+}
+
+/* Glow suave “metal/ámbar” */
+.building-card::before{
+  content:"";
+  position:absolute;
+  inset:0;
+  background:
+    radial-gradient(600px 120px at 30% 0%, rgba(205,179,142,0.10), transparent 60%),
+    radial-gradient(500px 130px at 80% 30%, rgba(205,179,142,0.08), transparent 60%);
+  pointer-events:none;
+}
+
+/* Estado MAX (más “premio”) */
+.building-card.is-max{
+  border-color: rgba(205,179,142,0.35);
+  box-shadow: 0 18px 55px rgba(0,0,0,0.55);
+}
+
+.building-card.is-max::after{
+  content:"";
+  position:absolute;
+  inset:0;
+  background: radial-gradient(700px 200px at 50% 0%, rgba(205,179,142,0.12), transparent 60%);
+  pointer-events:none;
+}
+
+.building-card__top{
+  display:flex;
+  justify-content: space-between;
+  gap: 10px;
+  position: relative;
+  z-index: 1;
+}
+
+.building-name{
+  font-weight: 900;
+  letter-spacing: 0.2px;
+}
+
+.building-level{
+  margin-top: 2px;
+  font-size: 12px;
+  color: rgba(242,234,223,0.78);
+}
+
+.tag{
+  margin-left: 8px;
+  padding: 2px 8px;
+  border-radius: 999px;
+  border: 1px solid rgba(205,179,142,0.25);
+  background: rgba(0,0,0,0.35);
+  color: rgba(205,179,142,0.95);
+  font-weight: 900;
+  letter-spacing: 0.5px;
+  font-size: 11px;
+}
+
+/* =========================
+   BADGES
+   ========================= */
+.badge{
+  font-size: 11px;
+  font-weight: 900;
+  letter-spacing: 0.6px;
+  padding: 6px 10px;
+  border-radius: 999px;
+  border: 1px solid rgba(205,179,142,0.22);
+  background: rgba(0,0,0,0.35);
+  color: rgba(242,234,223,0.9);
+}
+
+.badge.ok{
+  border-color: rgba(205,179,142,0.30);
+  background: rgba(20, 40, 25, 0.40);
+  box-shadow: 0 0 0 1px rgba(120, 255, 170, 0.12) inset;
+}
+
+.badge.warn{
+  border-color: rgba(205,179,142,0.25);
+  background: rgba(45, 28, 16, 0.45);
+  box-shadow: 0 0 0 1px rgba(255, 190, 120, 0.12) inset;
+}
+
+/* =========================
+   ROWS / LINES
+   ========================= */
+.building-card__row{
+  position: relative;
+  z-index: 1;
+  margin-top: 10px;
+  padding-top: 10px;
+  border-top: 1px dashed rgba(205,179,142,0.18);
+}
+
+.line{
+  display:flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.label{
+  color: rgba(242,234,223,0.72);
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  font-weight: 800;
+}
+
+.value{
+  font-size: 13px;
+  text-align: right;
+}
+
+.value .mono{
+  font-variant-numeric: tabular-nums;
+}
+
+.sep{
+  opacity: 0.55;
+  margin: 0 6px;
+}
+
+.muted{
+  opacity: 0.75;
+}
+
+.hint{
+  margin-top: 6px;
+  font-size: 12px;
+  color: rgba(242,234,223,0.72);
+}
+
+.hint__eta{
+  opacity: 0.85;
+  margin-left: 6px;
+}
+
+/* =========================
+   ACTIONS
+   ========================= */
+.building-card__actions{
+  position: relative;
+  z-index: 1;
+  margin-top: 12px;
+  display: flex;
+  justify-content: flex-end;
+}
+
+/* =========================
+   TRIBAL BUTTON
+   ========================= */
+.tribal-btn{
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 12px 18px;
+  border: 0;
+  background: transparent;
+  cursor: pointer;
+  color: rgba(242,234,223,0.95);
+  font-weight: 900;
+  letter-spacing: 0.4px;
+  text-transform: uppercase;
+  user-select: none;
+  text-shadow: 0 2px 0 rgba(0,0,0,0.55);
+  transform: translateY(0);
+  transition: transform 120ms ease;
+}
+
+.tribal-btn::before{
+  content:"";
+  position:absolute;
+  inset:-6px -10px;
+  background: url("/ui/tribal-button.svg") center/100% 100% no-repeat;
+  transition: transform 140ms ease, filter 140ms ease;
+  filter: brightness(0.95) saturate(1.05);
+  z-index: -2;
+}
+
+/* “borde interno” */
+.tribal-btn::after{
+  content:"";
+  position:absolute;
+  inset: 2px 8px;
+  border-radius: 14px;
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,0.14),
+    inset 0 -2px 0 rgba(0,0,0,0.35);
+  pointer-events:none;
+  z-index: -1;
+  opacity: 0.9;
+}
+
+.tribal-btn:hover{
+  transform: translateY(-1px);
+}
+.tribal-btn:hover::before{
+  transform: translateY(-1px) scale(1.01);
+  filter: brightness(1.05) saturate(1.15);
+}
+
+.tribal-btn:active{
+  transform: translateY(1px);
+}
+.tribal-btn:active::before{
+  transform: translateY(1px) scale(0.99);
+  filter: brightness(0.9) saturate(1.0);
+}
+
+.tribal-btn[disabled]{
+  opacity: 0.55;
+  cursor: not-allowed;
+  transform: none;
+}
+.tribal-btn[disabled]::before{
+  filter: grayscale(0.35) brightness(0.8);
+}
+.tribal-btn[disabled]::after{
+  opacity: 0.55;
+}
+
+/* =========================
+   RESPONSIVE
+   ========================= */
+@media (max-width: 520px){
+  .tribal-panel{
+    padding: 14px;
+  }
+  .tribal-panel__head{
+    flex-direction: column;
+    align-items: flex-start;
+  }
+  .buildings-panel__meta{
+    justify-content: flex-start;
+  }
+  .line{
+    flex-direction: column;
+    align-items: flex-start;
+  }
+  .value{
+    text-align: left;
+  }
+  .building-card__actions{
+    justify-content: stretch;
+  }
+  .tribal-btn{
+    width: 100%;
+  }
+}

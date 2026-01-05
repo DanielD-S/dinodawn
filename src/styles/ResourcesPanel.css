@@ -1,0 +1,139 @@
+/* ResourcesPanel.css */
+
+.resources-panel{
+  position: relative;
+}
+
+.resources-head{
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.resources-chips{
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  justify-content: flex-end;
+}
+
+.resources-grid{
+  display: grid;
+  gap: 12px;
+}
+
+.res-card{
+  border-radius: 14px;
+  border: 1px solid rgba(205,179,142,0.16);
+  background: rgba(10, 7, 6, 0.45);
+  box-shadow: 0 14px 40px rgba(0,0,0,0.35);
+  padding: 12px;
+  position: relative;
+  overflow: hidden;
+}
+
+.res-card::before{
+  content:"";
+  position:absolute;
+  inset:0;
+  background:
+    radial-gradient(600px 120px at 30% 0%, rgba(205,179,142,0.10), transparent 60%),
+    radial-gradient(500px 130px at 80% 30%, rgba(205,179,142,0.08), transparent 60%);
+  pointer-events:none;
+}
+
+.res-row{
+  position: relative;
+  z-index: 1;
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+  align-items: baseline;
+}
+
+.res-left{
+  font-weight: 900;
+  letter-spacing: 0.2px;
+}
+
+.res-right{
+  font-variant-numeric: tabular-nums;
+}
+
+.res-sub{
+  position: relative;
+  z-index: 1;
+  margin-top: 8px;
+  color: rgba(242,234,223,0.82);
+  font-size: 13px;
+}
+
+.dot{
+  opacity: 0.55;
+  margin: 0 8px;
+}
+
+.muted{
+  opacity: 0.75;
+}
+
+/* Progress bar */
+.rbar{
+  position: relative;
+  z-index: 1;
+  height: 12px;
+  border-radius: 999px;
+  background: rgba(0,0,0,0.35);
+  border: 1px solid rgba(205,179,142,0.18);
+  overflow: hidden;
+  margin-top: 8px;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,0.06);
+}
+
+.rbar__fill{
+  height: 100%;
+  width: 0%;
+  background: rgba(205,179,142,0.85);
+  box-shadow: inset 0 1px 0 rgba(255,255,255,0.16);
+}
+
+/* Storage card a 2 columnas en desktop */
+.storage-card{
+  grid-column: 1 / -1;
+}
+
+.resources-actions{
+  margin-top: 14px;
+  display: flex;
+  justify-content: flex-end;
+}
+
+/* Spin */
+.sync-icon{
+  display: inline-block;
+}
+.spin{
+  animation: spin 0.9s linear infinite;
+}
+@keyframes spin{
+  from{ transform: rotate(0deg); }
+  to{ transform: rotate(360deg); }
+}
+
+/* Responsive */
+@media (max-width: 640px){
+  .resources-head{
+    flex-direction: column;
+    align-items: flex-start;
+  }
+  .resources-chips{
+    justify-content: flex-start;
+  }
+  .resources-actions{
+    justify-content: stretch;
+  }
+  .resources-actions .tribal-btn{
+    width: 100%;
+  }
+}

@@ -1,0 +1,35 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="380" height="120" viewBox="0 0 380 120">
+  <defs>
+    <linearGradient id="btnWood" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#4b2f1c"></stop>
+      <stop offset="0.55" stop-color="#6b4325"></stop>
+      <stop offset="1" stop-color="#2b1a10"></stop>
+    </linearGradient>
+    <filter id="btnShadow" x="-30%" y="-30%" width="160%" height="160%">
+      <feDropShadow dx="0" dy="6" stdDeviation="8" flood-color="#000" flood-opacity="0.55"></feDropShadow>
+    </filter>
+  </defs>
+
+  <path filter="url(#btnShadow)" fill="url(#btnWood)" stroke="#1a0f09" stroke-width="8" d="M35,25
+       L345,25
+       L365,45
+       L365,75
+       L345,95
+       L35,95
+       L15,75
+       L15,45
+       Z"></path>
+
+  <!-- Carves -->
+  <path fill="#1a0f09" opacity="0.55" d="M65,25 l18,18 l-36,0 Z M315,25 l-18,18 l36,0 Z"></path>
+  <path fill="#1a0f09" opacity="0.35" d="M65,95 l18,-18 l-36,0 Z M315,95 l-18,-18 l36,0 Z"></path>
+
+  <!-- Rivets -->
+  <g fill="#cdb38e" stroke="#3b2a1d" stroke-width="3">
+    <circle cx="40" cy="60" r="9"></circle>
+    <circle cx="340" cy="60" r="9"></circle>
+  </g>
+
+  <!-- Label placeholder (si quieres texto dentro del SVG) -->
+  <!-- <text x="190" y="68" text-anchor="middle" font-size="28" fill="#f1e6d6" font-family="serif" font-weight="700">MEJORAR</text> -->
+</svg>

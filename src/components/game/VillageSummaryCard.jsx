@@ -1,4 +1,5 @@
 import "./VillageSummaryCard.css"
+import heroImg from "../../assets/hero/village-hero.png"
 
 function n(x) {
   const v = Number(x)
@@ -20,9 +21,7 @@ function pickFirstToCap(storageUi) {
   const entries = Object.entries(storageUi.hoursToCap)
     .filter(([, h]) => h !== null && h !== undefined)
     .map(([k, h]) => [k, Number(h)])
-
   if (!entries.length) return null
-  // hoursToCap puede ser 0 si ya está lleno
   entries.sort((a, b) => a[1] - b[1])
   const [resKey, hours] = entries[0]
   return { resKey, hours }
@@ -33,6 +32,10 @@ function resLabel(key) {
   if (key === "bones") return "🦴 Huesos"
   if (key === "meat") return "🍖 Carne"
   return key
+}
+
+function clampPct(x) {
+  return Math.max(0, Math.min(100, x))
 }
 
 export default function VillageSummaryCard({
@@ -63,9 +66,6 @@ export default function VillageSummaryCard({
 
   const firstToCap = pickFirstToCap(storageUi)
 
-  // Recomendación simple:
-  // - si estás cerca del cap, recomienda mejorar almacenamiento
-  // - si no, recomienda ir a edificios igual
   let recTitle = "Mejoras recomendadas"
   let recDesc = "Sube niveles para aumentar producción y progreso."
   let recTag = "📌"
@@ -83,16 +83,56 @@ export default function VillageSummaryCard({
       ? `Auto-sync: ${nextAutoInSeconds}s (cada ${autoSyncSeconds}s)`
       : null
 
-  // “hero” mueve un poquito el patrón (sin animaciones pesadas)
   const wobble = (Math.floor(now / 1000) % 20) * 2
 
+  // HUD Producción (por dominancia)
+  const maxR = Math.max(pph, bph, mph, 1)
+  const hudP = clampPct((pph / maxR) * 100)
+  const hudB = clampPct((bph / maxR) * 100)
+  const hudM = clampPct((mph / maxR) * 100)
+
   return (
-    <div className="vscCard">
-      <div className="vscHero" style={{ backgroundPosition: `${wobble}% 0%` }}>
+    <section className="tribal-panel vscCard" style={{ ["--wobble"]: `${wobble}%` }}>
+      {/* HERO (imagen) */}
+      <div
+        className="vscHeroArt vscHeroArt--bg"
+        style={{ backgroundImage: `url(${heroImg})` }}
+        aria-hidden="true"
+      >
+        <div className="vscHeroOverlay" />
+
+        <div className="vscHeroHud">
+          <div className="vscHudTitle">Producción</div>
+
+          <div className="vscHudBar">
+            <span className="vscHudIcon">🌿</span>
+            <div className="vscHudTrack">
+              <div className="vscHudFill is-plants" style={{ width: `${Math.max(6, hudP)}%` }} />
+            </div>
+          </div>
+
+          <div className="vscHudBar">
+            <span className="vscHudIcon">🦴</span>
+            <div className="vscHudTrack">
+              <div className="vscHudFill is-bones" style={{ width: `${Math.max(6, hudB)}%` }} />
+            </div>
+          </div>
+
+          <div className="vscHudBar">
+            <span className="vscHudIcon">🍖</span>
+            <div className="vscHudTrack">
+              <div className="vscHudFill is-meat" style={{ width: `${Math.max(6, hudM)}%` }} />
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* PANEL */}
+      <div className="vscHero">
         <div className="vscHeroTop">
           <div className="vscTitleRow">
             <div className="vscTitle">🏡 {villageName}</div>
-            {syncInfo ? <div className="vscMeta">{syncInfo}</div> : <div className="vscMeta"> </div>}
+            <div className="vscMeta">{syncInfo ?? " "}</div>
           </div>
 
           <div className="vscKpis">
@@ -105,7 +145,10 @@ export default function VillageSummaryCard({
 
             <div className="vscKpi">
               <div className="vscKpiLabel">Almacenamiento</div>
-              <div className="vscKpiValue">{Math.floor(p)} / {Math.floor(cap)} 🌿 · {Math.floor(b)} / {Math.floor(cap)} 🦴 · {Math.floor(m)} / {Math.floor(cap)} 🍖</div>
+              <div className="vscKpiValue">
+                {Math.floor(p)} / {Math.floor(cap)} 🌿 · {Math.floor(b)} / {Math.floor(cap)} 🦴 ·{" "}
+                {Math.floor(m)} / {Math.floor(cap)} 🍖
+              </div>
             </div>
           </div>
         </div>
@@ -135,11 +178,7 @@ export default function VillageSummaryCard({
           </div>
 
           <div className="vscActions">
-            <button
-              className="vscBtn"
-              onClick={() => onGoBuildings?.()}
-              type="button"
-            >
+            <button className="tribal-btn vscBtn" onClick={() => onGoBuildings?.()} type="button">
               🏗️ Ir a edificios
             </button>
           </div>
@@ -155,11 +194,9 @@ export default function VillageSummaryCard({
         </div>
 
         <div className="vscRecRight">
-          <div className="vscChip">
-            {totalPH > 0 ? `+${Math.floor(totalPH)}/h total` : "Sin producción"}
-          </div>
+          <div className="vscChip">{totalPH > 0 ? `+${Math.floor(totalPH)}/h total` : "Sin producción"}</div>
         </div>
       </div>
-    </div>
+    </section>
   )
 }

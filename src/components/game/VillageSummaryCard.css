@@ -1,131 +1,232 @@
-.vscCard {
+/* VillageSummaryCard.css — coherente con tribal.css */
+
+.vscCard{
+  border-radius: 18px;
+}
+
+/* ===== HERO ART (SVG o Imagen) ===== */
+.vscHeroArt{
   border-radius: 14px;
   overflow: hidden;
+  border: 1px solid rgba(205,179,142,0.18);
+  background: rgba(0,0,0,0.25);
+  box-shadow: 0 16px 50px rgba(0,0,0,0.45);
+  position: relative;
 }
 
-.vscHero {
-  border: 1px solid rgba(255, 255, 255, 0.08);
+/* Si sigues usando SVG en algún momento */
+.vscHeroArt svg{
+  display: block;
+  width: 100%;
+  height: auto;
+}
+
+/* ✅ MODO IMAGEN (banner) */
+.vscHeroArt--bg{
+  height: 220px;
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+}
+
+/* Overlay para contraste (evita que el HUD se pierda sobre la imagen) */
+.vscHeroOverlay{
+  position: absolute;
+  inset: 0;
   background:
-    radial-gradient(1200px 500px at 20% -20%, rgba(255,255,255,0.12), transparent 55%),
-    radial-gradient(900px 380px at 90% 0%, rgba(255,255,255,0.08), transparent 60%),
-    linear-gradient(180deg, rgba(255,255,255,0.05), rgba(255,255,255,0.02));
-  padding: 14px;
-  border-radius: 14px;
+    radial-gradient(900px 260px at 50% 30%, rgba(0,0,0,0.05), rgba(0,0,0,0.40)),
+    linear-gradient(180deg, rgba(0,0,0,0.25), rgba(0,0,0,0.55));
+  pointer-events: none;
 }
 
-.vscHeroTop {
+/* ===== HUD PRODUCCIÓN (arriba sobre el hero) ===== */
+.vscHeroHud{
+  position: absolute;
+  top: 14px;
+  left: 14px;
+  right: 14px;
+
+  display: flex;
+  align-items: center;
+  gap: 12px;
+
+  padding: 10px 12px;
+  border-radius: 14px;
+  border: 1px solid rgba(205,179,142,0.18);
+  background: rgba(0,0,0,0.35);
+  box-shadow: 0 10px 30px rgba(0,0,0,0.45);
+  backdrop-filter: blur(6px);
+
+  /* leve movimiento si usas --wobble */
+  background-position: var(--wobble, 0%) 0%;
+}
+
+.vscHudTitle{
+  font-weight: 900;
+  letter-spacing: 0.4px;
+  text-transform: uppercase;
+  color: rgba(242,234,223,0.95);
+  white-space: nowrap;
+}
+
+.vscHudBar{
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex: 1;
+  min-width: 120px;
+}
+
+.vscHudIcon{
+  width: 18px;
+  text-align: center;
+  opacity: 0.95;
+}
+
+.vscHudTrack{
+  height: 12px;
+  border-radius: 999px;
+  background: rgba(0,0,0,0.30);
+  border: 1px solid rgba(205,179,142,0.14);
+  overflow: hidden;
+  flex: 1;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,0.06);
+}
+
+.vscHudFill{
+  height: 100%;
+  border-radius: 999px;
+  opacity: 0.95;
+}
+
+.vscHudFill.is-plants{ background: rgba(120,255,170,0.70); }
+.vscHudFill.is-bones{  background: rgba(190,210,255,0.70); }
+.vscHudFill.is-meat{   background: rgba(255,170,120,0.70); }
+
+/* ===== PANEL INTERNO (texto/kpis) ===== */
+.vscHero{
+  margin-top: 12px;
+  border: 1px solid rgba(205,179,142,0.16);
+  background:
+    radial-gradient(1200px 500px at 20% -20%, rgba(205,179,142,0.12), transparent 55%),
+    radial-gradient(900px 380px at 90% 0%, rgba(205,179,142,0.08), transparent 60%),
+    linear-gradient(180deg, rgba(12,9,7,0.55), rgba(12,9,7,0.28));
+  border-radius: 14px;
+  padding: 14px;
+  background-position: var(--wobble, 0%) 0%;
+}
+
+.vscHeroTop{
   display: flex;
   flex-direction: column;
   gap: 10px;
 }
 
-.vscTitleRow {
+.vscTitleRow{
   display: flex;
   align-items: baseline;
   justify-content: space-between;
   gap: 12px;
 }
 
-.vscTitle {
+.vscTitle{
   font-size: 18px;
   font-weight: 900;
-  letter-spacing: 0.2px;
+  letter-spacing: 0.3px;
+  color: rgba(242,234,223,0.95);
 }
 
-.vscMeta {
+.vscMeta{
   font-size: 12px;
-  opacity: 0.7;
+  opacity: 0.75;
   white-space: nowrap;
 }
 
-.vscKpis {
+/* KPIs */
+.vscKpis{
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 10px;
 }
 
-.vscKpi {
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  background: rgba(255, 255, 255, 0.03);
+.vscKpi{
+  border: 1px solid rgba(205,179,142,0.16);
+  background: rgba(0,0,0,0.22);
   border-radius: 12px;
   padding: 10px;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,0.05);
 }
 
-.vscKpiLabel {
+.vscKpiLabel{
   font-size: 12px;
-  opacity: 0.75;
+  opacity: 0.72;
   margin-bottom: 6px;
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+  font-weight: 800;
 }
 
-.vscKpiValue {
+.vscKpiValue{
   font-size: 13px;
-  font-weight: 700;
+  font-weight: 800;
   opacity: 0.95;
   line-height: 1.2;
 }
 
-.vscBar {
+/* Barra de “llenado” */
+.vscBar{
   height: 10px;
   border-radius: 999px;
-  background: rgba(255, 255, 255, 0.08);
+  background: rgba(0,0,0,0.30);
+  border: 1px solid rgba(205,179,142,0.16);
   overflow: hidden;
   margin: 12px 0 10px 0;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,0.06);
 }
 
-.vscBarFill {
+.vscBarFill{
   height: 100%;
   border-radius: 999px;
-  background: rgba(255, 255, 255, 0.35);
+  background: rgba(205,179,142,0.85);
 }
 
-.vscBarFill.warn {
-  background: rgba(255, 205, 64, 0.55);
-}
+.vscBarFill.warn{ background: rgba(255, 205, 64, 0.55); }
+.vscBarFill.danger{ background: rgba(255, 80, 80, 0.60); }
 
-.vscBarFill.danger {
-  background: rgba(255, 80, 80, 0.6);
-}
-
-.vscHeroBottom {
+/* Bottom */
+.vscHeroBottom{
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 12px;
 }
 
-.vscHint {
+.vscHint{
   font-size: 13px;
-  opacity: 0.9;
+  opacity: 0.92;
 }
 
-.vscDanger {
+.vscDanger{
   color: rgba(255, 80, 80, 0.95);
-  font-weight: 800;
+  font-weight: 900;
 }
 
-.vscActions {
+/* Actions */
+.vscActions{
   display: flex;
   gap: 10px;
 }
 
-.vscBtn {
-  border: 1px solid rgba(255, 255, 255, 0.14);
-  background: rgba(255, 255, 255, 0.06);
-  color: inherit;
-  border-radius: 12px;
-  padding: 10px 12px;
-  font-weight: 800;
-  cursor: pointer;
+/* Botón usa skin global .tribal-btn */
+.vscBtn{
+  padding: 12px 18px;
 }
 
-.vscBtn:hover {
-  background: rgba(255, 255, 255, 0.10);
-}
-
-.vscRec {
-  margin-top: 10px;
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  background: rgba(255, 255, 255, 0.03);
+/* Recomendación */
+.vscRec{
+  margin-top: 12px;
+  border: 1px solid rgba(205,179,142,0.16);
+  background: rgba(0,0,0,0.20);
   border-radius: 14px;
   padding: 12px 14px;
   display: flex;
@@ -134,44 +235,56 @@
   align-items: center;
 }
 
-.vscRecTitle {
+.vscRecTitle{
   font-size: 13px;
   font-weight: 900;
   margin-bottom: 4px;
+  color: rgba(242,234,223,0.95);
 }
 
-.vscRecDesc {
+.vscRecDesc{
   font-size: 12px;
   opacity: 0.75;
 }
 
-.vscChip {
+.vscChip{
   font-size: 12px;
   font-weight: 900;
-  opacity: 0.9;
-  border: 1px solid rgba(255, 255, 255, 0.12);
-  background: rgba(255, 255, 255, 0.05);
+  opacity: 0.95;
+  border: 1px solid rgba(205,179,142,0.18);
+  background: rgba(0,0,0,0.22);
   padding: 8px 10px;
   border-radius: 999px;
   white-space: nowrap;
 }
 
-@media (max-width: 640px) {
-  .vscKpis {
+/* Responsive */
+@media (max-width: 640px){
+  .vscKpis{
     grid-template-columns: 1fr;
   }
 
-  .vscHeroBottom {
+  .vscHeroBottom{
     flex-direction: column;
     align-items: flex-start;
   }
 
-  .vscActions {
+  .vscActions{
     width: 100%;
   }
 
-  .vscBtn {
+  .vscActions .tribal-btn{
     width: 100%;
     justify-content: center;
+  }
+
+  /* HUD en columna */
+  .vscHeroHud{
+    flex-direction: column;
+    align-items: stretch;
+    gap: 8px;
+  }
+  .vscHudBar{
+    min-width: 0;
   }
 }
